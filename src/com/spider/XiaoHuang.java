@@ -1,7 +1,11 @@
 package com.spider;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -39,76 +43,36 @@ public class XiaoHuang {
 	private static final String IMGSRC_REG = "[a-zA-z]+://[^\\s]*";
 	// 获取图片Url的正则
 	private static final String ImageUrl_REX = "(https|http)?:.{0,80}.(jpg|jpeg|png)+";
-	// 获取二级页面的正则
+	// 获取豆瓣美女二级页面的正则
 	private static final String Second_REG = "(https|http)?:.{0,80}/topic/[1-9]{7}";
-	//存放连接失败的imageUrl集合
+	// 草榴二级页面的正则
+	private static final String Caoliu_Second = "htm_data.{0,80}.html";
+	// 草榴图片匹配
+	private static final String CaoliuImageUrl_REX = "(https|http):.{0,80}.(jpg|jpeg|gif)+";
+	// 存放连接失败的imageUrl集合
 	static List<String> errorList = new ArrayList<String>();
-	
+
 	/**
 	 * 点击这里开始任务 2018-11-27 23:46分
 	 * 
 	 * @throws InterruptedException
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public static void main(String[] args) throws InterruptedException, IOException {
 
 		System.out.println("下载任务开始了~~~~~");
-		
+
 		// 任务开始时间
 		Date d1 = new Date();
-		
-		String url = "";
-//		String dir = "D://log/meizitu/";
-		String dir = "";
-		//循环多个cid
-		for (int cid = 2; cid < 8; cid++) {
-			//设置变量控制页面循环
-//			boolean flag = true;
-			//循环多个页面
-			for (int pager = 1; pager < 30 ; pager++) {
-				url = "https://www.dbmeinv.com/index.htm?cid=" + cid + "&pager_offset=" + pager;
-//				System.out.println("这是第" + cid + "个类型中的第" + pager + "页");
-				dir = "D://log/meizitu/" + cid + "/";
-				// 获取页面href标签
-				List<String> secondUrlList = getRegexList(url, Second_REG);
-				// 校验页面是否包含二级topic页面
-				if (secondUrlList.size() != 0) {
-					for (String string : secondUrlList) {
-						List<String> realImgUrlList = getRegexList(string, ImageUrl_REX);
-						if (realImgUrlList!=null) {
-							for (String imageUrl : realImgUrlList) {
-								//获取包含large的imageUrl
-								if (imageUrl.contains("large")) {
-									download(imageUrl, dir);
-								}
-							}
-						}
-					}
-					
-				}else {
-//					System.out.println("第"+cid +"个类中第"+pager+"个页面没有二级页面");
-					//此时页面中没有topic的标签,改变flag,跳出循环
-//					flag = false;
-//					break;
-				}
-//				Thread.sleep(100);
-			}
-		}
-		
-		
-		
-		/**
-		 * 这是正确的下载妹子图的代码块
-		 */
-		
-/*		List<String> imageUrlList = getRegexList("https://www.dbmeinv.com/topic/1828105", ImageUrl_REX);
-		for (String imageUrl : imageUrlList) {
-			System.out.println(imageUrl);
-			if (imageUrl.contains("large")) {
-				download(imageUrl, dir);
-			}
-		}
-*/
+
+		download1024();
+
+		// download("http://www.sxotu.com/u/20180702/23494535.jpg", "D://log/meizitu/");
+
+		// downLoadFromUrl("http://www.xoimg.club/u/20181201/21455648.jpg",
+		// "21455648.jpg", "D://log/meizitu/");
+		// downLoad403("http://www.xoimg.club/u/20181201/21455648.jpg",
+		// "D://log/meizitu/");
 		// 下载完成的时间
 		Date d2 = new Date();
 		// 计算程序的运行时间，并输出
@@ -120,8 +84,59 @@ public class XiaoHuang {
 		System.out.println("一共有坏链接" + errorList.size() + "个~~");
 	}
 
+	public static void download1024() {
+		String url = "";
+		// String dir = "D://log/meizitu/";
+		String dir = "";
+		// 设置变量控制页面循环
+		// boolean flag = true;
+		//
+
+		// String content = "<a href=\"htm_data/16/1812/3353579.html\" target=\"";
+		// Matcher matcher = Pattern.compile(Caoliu_Second).matcher(content);
+		// while(matcher.find()) {
+		// System.out.println(matcher.group());
+		// }
+
+		// 循环多个页面
+		for (int pager = 1; pager < 200; pager++) {
+			// 地址 htm_data/16/1812/3353579.html
+			// 全地址 https://bb.e8v.club/htm_data/16/1812/3358310.html
+
+			// 第二页 https://bb.e8v.club/thread0806.php?fid=16&search=&page=2
+			url = "https://bb.e8v.club/thread0806.php?fid=16&search=&page=" + pager;
+
+			// 获取页面href标签
+			List<String> secondUrlList = getRegexList(url, Caoliu_Second);
+
+			// 校验页面是否包含二级topic页面
+			if (secondUrlList.size() != 0) {
+				for (String string : secondUrlList) {
+					dir = "D://log/meizitu/" + string.substring(string.lastIndexOf("/") + 1, string.length()) + "/";
+					// System.out.println("正在下载" + dir + "目录下的图片");
+					List<String> realImgUrlList = getRegexList("https://bb.e8v.club/" + string, CaoliuImageUrl_REX);
+					if (realImgUrlList != null) {
+						for (String imageUrl : realImgUrlList) {
+							if (imageUrl.contains("/u/")) {
+								// 获取包含large的imageUrl
+								try {
+									downLoad403(imageUrl, dir);
+									Thread.sleep(100);
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						}
+					}
+				}
+			}
+
+		}
+	}
+
 	/**
 	 * 获得指定url页面中符合regrex正则的url集合
+	 * 
 	 * @param url
 	 * @param regrex
 	 * @return
@@ -131,6 +146,7 @@ public class XiaoHuang {
 		List<String> list = new ArrayList<String>();
 		try {
 			content = getContent(url);
+			// System.out.println("content" + content);
 			if (content != null) {
 				Matcher matcher = Pattern.compile(regrex).matcher(content);
 				while (matcher.find()) {
@@ -140,7 +156,7 @@ public class XiaoHuang {
 					}
 				}
 			}
-		}  catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
@@ -151,7 +167,7 @@ public class XiaoHuang {
 	 * 开始下载
 	 * 
 	 * @throws InterruptedException
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public static String begin(String url) throws InterruptedException, IOException {
 		URL urlObj = null;
@@ -210,7 +226,7 @@ public class XiaoHuang {
 	 */
 	public static String getContent(String url) {
 		// 网页的编码格式
-		String charset = "utf-8";
+		String charset = "gbk";
 		// 利用URL解析网址
 		String jsonString = "";
 		URL urlObj = null;
@@ -224,11 +240,15 @@ public class XiaoHuang {
 		try {
 			// 打开URL连接
 			urlCon = urlObj.openConnection();
+			urlCon.addRequestProperty("user-agent",
+					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36");
+
 			// 将HTML内容解析成UTF-8格式
 			Document doc = Jsoup.parse(urlCon.getInputStream(), charset, url);
 			jsonString = doc.toString();
 		} catch (IOException e) {
-//			System.out.println("There was an error connecting to the URL");
+			System.out.println(url);
+			System.out.println("There was an error connecting to the URL");
 			errorList.add(url);
 			return "";
 		}
@@ -302,7 +322,7 @@ public class XiaoHuang {
 
 			} else {
 
-//				System.out.println(fileName + "  有重复文件存在  " + dir + "  目录下");
+				// System.out.println(fileName + " 有重复文件存在 " + dir + " 目录下");
 				falseCount++;
 			}
 		} catch (Exception e) {
@@ -323,14 +343,133 @@ public class XiaoHuang {
 		return null;
 
 	}
-	
-	public static void getPictsFromTopic(String topicUrl,String errordir) {
+
+	public static void getPictsFromTopic(String topicUrl, String errordir) {
 		List<String> regexList = getRegexList(topicUrl, ImageUrl_REX);
 		for (String imageUrl : regexList) {
 			if (imageUrl.contains("large")) {
 				download(imageUrl, errordir);
 			}
 		}
+	}
+
+	/**
+	 * 下载豆瓣的方法
+	 * 
+	 */
+	public static void downloadDbmeinv() {
+		String url = "";
+		// String dir = "D://log/meizitu/";
+		String dir = "";
+		// 循环多个cid
+		for (int cid = 2; cid < 8; cid++) {
+			// 设置变量控制页面循环
+			// boolean flag = true;
+			// 循环多个页面
+			for (int pager = 1; pager < 30; pager++) {
+				url = "https://www.dbmeinv.com/index.htm?cid=" + cid + "&pager_offset=" + pager;
+				// System.out.println("这是第" + cid + "个类型中的第" + pager + "页");
+				dir = "D://log/meizitu/" + cid + "/";
+				// 获取页面href标签
+				List<String> secondUrlList = getRegexList(url, Second_REG);
+				// 校验页面是否包含二级topic页面
+				if (secondUrlList.size() != 0) {
+					for (String string : secondUrlList) {
+						List<String> realImgUrlList = getRegexList(string, ImageUrl_REX);
+						if (realImgUrlList != null) {
+							for (String imageUrl : realImgUrlList) {
+								// 获取包含large的imageUrl
+								if (imageUrl.contains("large")) {
+									download(imageUrl, dir);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		/**
+		 * 这是正确的下载妹子图的代码块
+		 */
+
+		/*
+		 * List<String> imageUrlList =
+		 * getRegexList("https://www.dbmeinv.com/topic/1828105", ImageUrl_REX); for
+		 * (String imageUrl : imageUrlList) { System.out.println(imageUrl); if
+		 * (imageUrl.contains("large")) { download(imageUrl, dir); } }
+		 */
+	}
+
+	/**
+	 * 防止被403屏蔽的下载方法
+	 * 
+	 * @param urlStr
+	 * @param fileName
+	 * @param savePath
+	 * @throws IOException
+	 */
+	public static void downLoad403(String imageurl, String savePath) throws IOException {
+
+		String fileName = imageurl.substring(imageurl.lastIndexOf("/") + 1, imageurl.length());
+
+		File file = new File(savePath + fileName);
+		File saveDir = new File(savePath);
+		// 判断文件夹是否存在,如果存在不下载
+		// if(!saveDir.exists()) {
+		// 新建文件夹
+		saveDir.mkdirs();
+		// 调用下载方法的时候,先检验相同目录下有没有相同的文件,如果没有才开始连接并下载
+		if (!file.exists()) {
+
+			URL url = new URL(imageurl);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			// 设置超时间为3秒
+			conn.setConnectTimeout(3 * 1000);
+			// 防止屏蔽程序抓取而返回403错误
+			conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
+
+			// 得到输入流
+			InputStream inputStream = conn.getInputStream();
+			// 获取自己数组
+			byte[] getData = readInputStream(inputStream);
+
+			FileOutputStream fos = new FileOutputStream(file);
+			fos.write(getData);
+			if (fos != null) {
+				fos.close();
+			}
+			if (inputStream != null) {
+				inputStream.close();
+			}
+
+			successCount++;
+			// System.out.println("图片地址为:" + imageurl);
+			System.out.println("第" + successCount + "个图片下载成功");
+
+		} else {
+			// System.out.println(savePath + fileName + "已经存在!");
+			falseCount++;
+			System.out.println("第" + falseCount + "个文件已存在");
+		}
+	}
+
+	/**
+	 * 从输入流中获取字节数组
+	 * 
+	 * @param inputStream
+	 * @return
+	 * @throws IOException
+	 */
+	public static byte[] readInputStream(InputStream inputStream) throws IOException {
+		byte[] buffer = new byte[1024];
+		int len = 0;
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		while ((len = inputStream.read(buffer)) != -1) {
+			bos.write(buffer, 0, len);
+		}
+		bos.close();
+		return bos.toByteArray();
 	}
 
 }
