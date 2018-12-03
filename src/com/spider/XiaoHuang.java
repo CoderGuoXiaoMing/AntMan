@@ -42,13 +42,13 @@ public class XiaoHuang {
 	// 获取src路径的正则
 	private static final String IMGSRC_REG = "[a-zA-z]+://[^\\s]*";
 	// 获取图片Url的正则
-	private static final String ImageUrl_REX = "(https|http)?:.{0,80}.(jpg|jpeg|png)+";
+	private static final String ImageUrl_REX = "(https|http):.{0,80}.(jpg|jpeg|png)";
 	// 获取豆瓣美女二级页面的正则
 	private static final String Second_REG = "(https|http)?:.{0,80}/topic/[1-9]{7}";
 	// 草榴二级页面的正则
 	private static final String Caoliu_Second = "htm_data.{0,80}.html";
-	// 草榴图片匹配
-	private static final String CaoliuImageUrl_REX = "(https|http):.{0,80}.(jpg|jpeg|gif)+";
+	// 包含协议http的图片匹配
+	private static final String CaoliuImageUrl_REX = "(https|http):.{0,80}.(jpg|jpeg|gif|png)+";
 	// 存放连接失败的imageUrl集合
 	static List<String> errorList = new ArrayList<String>();
 
@@ -65,14 +65,10 @@ public class XiaoHuang {
 		// 任务开始时间
 		Date d1 = new Date();
 
-		download1024();
-
-		// download("http://www.sxotu.com/u/20180702/23494535.jpg", "D://log/meizitu/");
-
-		// downLoadFromUrl("http://www.xoimg.club/u/20181201/21455648.jpg",
-		// "21455648.jpg", "D://log/meizitu/");
-		// downLoad403("http://www.xoimg.club/u/20181201/21455648.jpg",
-		// "D://log/meizitu/");
+//		download1024();
+//		buyerShow();
+		String content = getContent("https://acs.m.taobao.com/h5/mtop.taobao.social.feed.aggregate/1.0/?appKey=12574478&t=1543825524620&sign=d15beac12f6beea5f8a822753c6310ba&api=mtop.taobao.social.feed.aggregate&v=1.0&timeout=300000&timer=300000&type=jsonp&dataType=jsonp&callback=mtopjsonp4&data=%7B%22params%22%3A%22%7B%5C%22nodeId%5C%22%3A%5C%22%5C%22%2C%5C%22sellerId%5C%22%3A%5C%22673336836%5C%22%2C%5C%22pagination%5C%22%3A%7B%5C%22direction%5C%22%3A%5C%221%5C%22%2C%5C%22hasMore%5C%22%3A%5C%22true%5C%22%2C%5C%22pageNum%5C%22%3A%5C%224%5C%22%2C%5C%22pageSize%5C%22%3A%5C%2220%5C%22%7D%7D%22%2C%22cursor%22%3A%224%22%2C%22pageNum%22%3A%224%22%2C%22pageId%22%3A5703%2C%22env%22%3A%221%22%7D");
+		System.out.println(content);
 		// 下载完成的时间
 		Date d2 = new Date();
 		// 计算程序的运行时间，并输出
@@ -83,7 +79,21 @@ public class XiaoHuang {
 		System.out.println("有" + falseCount + "个文件已经存在!");
 		System.out.println("一共有坏链接" + errorList.size() + "个~~");
 	}
+	
+	public static void buyerShow() {
+		String url = "https://h5.m.taobao.com/ocean/privatenode/shop.html?sellerId=673336836";
+		List<String> urlList = getRegexList(url, ImageUrl_REX);
+		for (String imageUrl : urlList) {
+			System.out.println(imageUrl);
+		}
+		
+	}
 
+	/**
+	 * 下载1024的方法
+	 * 
+	 *
+	 */
 	public static void download1024() {
 		String url = "";
 		// String dir = "D://log/meizitu/";
@@ -146,7 +156,7 @@ public class XiaoHuang {
 		List<String> list = new ArrayList<String>();
 		try {
 			content = getContent(url);
-			// System.out.println("content" + content);
+			 System.out.println("content" + content);
 			if (content != null) {
 				Matcher matcher = Pattern.compile(regrex).matcher(content);
 				while (matcher.find()) {
@@ -226,7 +236,7 @@ public class XiaoHuang {
 	 */
 	public static String getContent(String url) {
 		// 网页的编码格式
-		String charset = "gbk";
+		String charset = "utf-8";
 		// 利用URL解析网址
 		String jsonString = "";
 		URL urlObj = null;
@@ -241,8 +251,9 @@ public class XiaoHuang {
 			// 打开URL连接
 			urlCon = urlObj.openConnection();
 			urlCon.addRequestProperty("user-agent",
-					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36");
-
+					"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.89 Safari/537.36");
+			urlCon.addRequestProperty("cookie", "miid=633179211787626196; enc=M4dzgVZoJ%2Bl5iIz2ZOWZvqIBlm6EAqkmtXAsgItFp0MYybXuZPwFpTrE69UO2Xq2gKcWJh0ZnTglofm4GpCC6A%3D%3D; hng=CN%7Czh-CN%7CCNY%7C156; thw=cn; t=cf6ae8733603208598518fb183b97a3a; uc3=vt3=F8dByR6robjimcawtj0%3D&id2=VWw2wG%2F4FE0w&nk2=BMKQcZkhooys6A%3D%3D&lg2=W5iHLLyFOGW7aA%3D%3D; tracknick=g418572664; lgc=g418572664; _cc_=WqG3DMC9EA%3D%3D; tg=0; tk_trace=oTRxOWSBNwn9dPyorMJE%2FoPdY8zZPEr%2FCrvCMS%2BFZCFf1lyAe7CQGAWszmcVwVMqGHxrRGnAb%2BiYg%2F5QIAjRnGBxarlm5L9zimfuVem9DKDlKbpezatB7vn6P9HddJtfjpHXABAUZdcNLTn61k5QXATseJ2B4B2to8rH0xUPXtsQMmeBkLCOB3%2BdNwnrJCfEEnPDlSX2MTKz5XNJtfZs%2FJSJ1RMhfpgdQ0DECaqNS%2F8Xpko3tQQ2waAcJcz9yWzkbIJwBGpME1U1LA9UbCQ%2FL%2FvaiIGG%2BpbdHrv4QbvpVoqMY4nARfEvIouTrpdiyZeG%2FKHpyCJBI2c2H%2B4JQD01p03BYOk0L6PmnSZiU1tpRRhJIDBSETt%2FZv97i6wGcxfsCK5qZZ3wud5B26lKMhW6O%2FkMvyuDeGtpZqBnnEOKyjjBDXjH4Fldo8R7Qz26UzWHkQulm04f%2FHe2hyrcyrYdV6s4FY9uPCTdDxo88Tt1fhzQy4d7tPVp1S8iZ2%2FYEuBM1sAbhiUeAUgVCq8Su0bS09JL10LrtRXMYbkd45kDKHCR8UixPa37kyUDBiq2KYqleDvoNJhiYFqYby4wotfUrSIeVmNP2vN7hCyMgJ14eMHTdYk%2BpUQM1WWgPT2Zr1ONBgn22Q%3D%3D; cookie2=1a940e4fc53e69fac8c958817e94982e; v=0; _tb_token_=34ea67e3eb818; mt=ci=-1_0; _m_h5_tk=92f77fa5c29ac43c548cd11153327f8e_1543830080266; _m_h5_tk_enc=07287d3e442d1630ec0c7ac05c712645; uc1=cookie14=UoTYNcNUR18c7Q%3D%3D; x=e%3D1%26p%3D*%26s%3D0%26c%3D0%26f%3D0%26g%3D0%26t%3D0%26__ll%3D-1%26_ato%3D0; cna=ELp7FNleGi8CAXTsvPbaVvMp; isg=BNzcb1fi7OtusZ9FcNLZbRo0rfoiRby1JJKEY7bdwUeqAXyL3mdlD0DwZSlcjrjX");
+			urlCon.addRequestProperty("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
 			// 将HTML内容解析成UTF-8格式
 			Document doc = Jsoup.parse(urlCon.getInputStream(), charset, url);
 			jsonString = doc.toString();

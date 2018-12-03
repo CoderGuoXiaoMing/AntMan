@@ -33,7 +33,7 @@ public class ZhiHu {
 	static int limit = 2;
 
 	// 问题的ID
-	static int questId = 31434037;
+	static int questId = 28753270;
 
 	// 已经存在的文件个数
 	static int falseCount = 0;

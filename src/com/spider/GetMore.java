@@ -25,7 +25,7 @@ public class GetMore {
 	 */
 	static int begin =   2018100  ;
 	static int lastest =   2018140  ;
-	static String kindOfImage = "jpg";  // all 下载所有
+	static String kindOfImage = "all";  // all 下载所有
 /*   			           ^
 *			              ^^^
 *			             ^^^^^
@@ -46,7 +46,7 @@ public class GetMore {
         
         System.out.println("屯粮食开始了......");
        
-        for (int i = begin ; i < lastest + 1 ; i++) {
+        for (int i = 2018166 ; i >0 ; i--) {
 			
         	String mainUrl= "http://f.uliba.net/"+ i +".html/";
 //        	String mainUrl= "http://f.uliba.net/%e7%be%8e%e8%85%bf%e4%b8%9d%e8%a2%9c.html";
@@ -148,7 +148,6 @@ public class GetMore {
             
             // 如果图片储存的目录不存在，则新建该目录
             if (!dirfile.exists()) {    
-            	System.out.println("文件夹不存在");
                 dirfile.mkdirs();  
             }  
             
@@ -166,7 +165,7 @@ public class GetMore {
             	System.out.println( filename + "  有重复文件存在  " + dir + "  目录下");
             }
             //向数据库中插入数据
-            Utils.recordDownloadUrl(url);
+//            Utils.recordDownloadUrl(url);
         } 
         catch(Exception e) {  
             e.printStackTrace();  
