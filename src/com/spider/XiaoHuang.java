@@ -2,11 +2,15 @@ package com.spider;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.Authenticator;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -48,9 +52,14 @@ public class XiaoHuang {
 	// 草榴二级页面的正则
 	private static final String Caoliu_Second = "htm_data.{0,80}.html";
 	// 包含协议http的图片匹配
-	private static final String CaoliuImageUrl_REX = "(https|http):.{0,80}.(jpg|jpeg|gif|png)+";
+	private static final String CaoliuImageUrl_REX = "(https|http):.{0,80}.(jpg|jpeg|gif)";
+
+	private static final String TopicName = "(https|http)://";
 	// 存放连接失败的imageUrl集合
 	static List<String> errorList = new ArrayList<String>();
+	static Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 1080));
+	
+	static Proxy proxy5 = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", 1080));
 
 	/**
 	 * 点击这里开始任务 2018-11-27 23:46分
@@ -59,16 +68,32 @@ public class XiaoHuang {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws InterruptedException, IOException {
-
+		System.setProperty("proxyPort", "80");
+        System.setProperty("proxyHost", "127.0.0.1");
 		System.out.println("下载任务开始了~~~~~");
 
 		// 任务开始时间
 		Date d1 = new Date();
-
-//		download1024();
-//		buyerShow();
-		String content = getContent("https://acs.m.taobao.com/h5/mtop.taobao.social.feed.aggregate/1.0/?appKey=12574478&t=1543825524620&sign=d15beac12f6beea5f8a822753c6310ba&api=mtop.taobao.social.feed.aggregate&v=1.0&timeout=300000&timer=300000&type=jsonp&dataType=jsonp&callback=mtopjsonp4&data=%7B%22params%22%3A%22%7B%5C%22nodeId%5C%22%3A%5C%22%5C%22%2C%5C%22sellerId%5C%22%3A%5C%22673336836%5C%22%2C%5C%22pagination%5C%22%3A%7B%5C%22direction%5C%22%3A%5C%221%5C%22%2C%5C%22hasMore%5C%22%3A%5C%22true%5C%22%2C%5C%22pageNum%5C%22%3A%5C%224%5C%22%2C%5C%22pageSize%5C%22%3A%5C%2220%5C%22%7D%7D%22%2C%22cursor%22%3A%224%22%2C%22pageNum%22%3A%224%22%2C%22pageId%22%3A5703%2C%22env%22%3A%221%22%7D");
+	
+		String targUrl = "http://verall80.tumblr.com/api/read/json?start=0&num=200";
+//		String savePath = "D://log/Tumblr/verall80/";
+//		List<String> regexList = getRegexList(targUrl, CaoliuImageUrl_REX);
+//		for (String string : regexList) {
+//			System.out.println(string);
+//		}
+		
+		String content = getContent(targUrl);
 		System.out.println(content);
+		Matcher matcher = Pattern.compile(CaoliuImageUrl_REX).matcher(content);
+		System.out.println(matcher.group());
+//		Matcher matcher = Pattern.compile("(https|http)?:.{0,80}r.(jpg|jpeg)").matcher("src=https:\\/\\/66.media.tumblr.com\\/b8d6cedd806a590463a3eba314b2a294\\/tumblr_ph9jnoBfbK1rkr588_540.jpg\\");
+//		System.out.println(matcher.group());
+		
+		
+		
+		
+		
+		
 		// 下载完成的时间
 		Date d2 = new Date();
 		// 计算程序的运行时间，并输出
@@ -78,8 +103,15 @@ public class XiaoHuang {
 		System.out.println("有" + successCount + "个文件下载成功!");
 		System.out.println("有" + falseCount + "个文件已经存在!");
 		System.out.println("一共有坏链接" + errorList.size() + "个~~");
+		
+		
 	}
 	
+	private static String getTopicName(String targUrl) {
+		Matcher matcher = Pattern.compile(TopicName).matcher(targUrl);
+		return matcher.group();
+	}
+
 	public static void buyerShow() {
 		String url = "https://h5.m.taobao.com/ocean/privatenode/shop.html?sellerId=673336836";
 		List<String> urlList = getRegexList(url, ImageUrl_REX);
@@ -87,6 +119,94 @@ public class XiaoHuang {
 			System.out.println(imageUrl);
 		}
 		
+	}
+	
+	public static void downTumblr() {
+		String  url = "";
+		String dir = "D://log/Tumblr/hisame/";
+		for (int i = 1; i <= 1; i++) {
+			url = "http://hisame.tumblr.com/page/" + i;
+			List<String> regexList = getRegexList(url, ImageUrl_REX);
+			for (String imageUrl : regexList) {
+				downLoadByProxy(imageUrl, dir);
+			}
+		}
+		
+		
+		
+	}
+	
+	
+	private static void downLoadByProxy(String imageurl, String savePath) {
+		String fileName = imageurl.substring(imageurl.lastIndexOf("/") + 1, imageurl.length());
+
+		File file = new File(savePath + fileName);
+		File saveDir = new File(savePath);
+		// 判断文件夹是否存在,如果存在不下载
+		// if(!saveDir.exists()) {
+		// 新建文件夹
+		saveDir.mkdirs();
+		// 调用下载方法的时候,先检验相同目录下有没有相同的文件,如果没有才开始连接并下载
+		if (!file.exists()) {
+
+			try {
+				URL url = new URL(imageurl);
+				
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection(proxy);
+				// 设置超时间为3秒
+				conn.setConnectTimeout(3 * 1000);
+				// 防止屏蔽程序抓取而返回403错误
+				conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
+				
+				// 得到输入流
+				InputStream inputStream = conn.getInputStream();
+				// 获取自己数组
+				byte[] getData = readInputStream(inputStream);
+
+				FileOutputStream fos = new FileOutputStream(file);
+				fos.write(getData);
+				if (fos != null) {
+					fos.close();
+				}
+				if (inputStream != null) {
+					inputStream.close();
+				}
+			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			successCount++;
+			// System.out.println("图片地址为:" + imageurl);
+			System.out.println("第" + successCount + "个图片下载成功");
+
+		} else {
+			// System.out.println(savePath + fileName + "已经存在!");
+			falseCount++;
+			System.out.println("第" + falseCount + "个文件已存在");
+		}
+	}
+
+	public static void downJianDan() {
+		String url ="";
+		String dir = "D://log/jandan/";
+		String realImageUrl = "";
+		for (int i = 43; i > 0; i--) {
+			url = "http://jandan.net/ooxx/page-" + i;
+			List<String> imageUrlList = getRegexList(url, ImageUrl_REX);
+			for (String imageUrl : imageUrlList) {
+				realImageUrl = imageUrl.replace("mw600", "large");
+				downLoad403(realImageUrl, dir);
+			}
+			
+			
+		}
 	}
 
 	/**
@@ -98,22 +218,9 @@ public class XiaoHuang {
 		String url = "";
 		// String dir = "D://log/meizitu/";
 		String dir = "";
-		// 设置变量控制页面循环
-		// boolean flag = true;
-		//
-
-		// String content = "<a href=\"htm_data/16/1812/3353579.html\" target=\"";
-		// Matcher matcher = Pattern.compile(Caoliu_Second).matcher(content);
-		// while(matcher.find()) {
-		// System.out.println(matcher.group());
-		// }
 
 		// 循环多个页面
 		for (int pager = 1; pager < 200; pager++) {
-			// 地址 htm_data/16/1812/3353579.html
-			// 全地址 https://bb.e8v.club/htm_data/16/1812/3358310.html
-
-			// 第二页 https://bb.e8v.club/thread0806.php?fid=16&search=&page=2
 			url = "https://bb.e8v.club/thread0806.php?fid=16&search=&page=" + pager;
 
 			// 获取页面href标签
@@ -156,7 +263,7 @@ public class XiaoHuang {
 		List<String> list = new ArrayList<String>();
 		try {
 			content = getContent(url);
-			 System.out.println("content" + content);
+//			 System.out.println("content" + content);
 			if (content != null) {
 				Matcher matcher = Pattern.compile(regrex).matcher(content);
 				while (matcher.find()) {
@@ -171,59 +278,6 @@ public class XiaoHuang {
 			return null;
 		}
 		return list;
-	}
-
-	/**
-	 * 开始下载
-	 * 
-	 * @throws InterruptedException
-	 * @throws IOException
-	 */
-	public static String begin(String url) throws InterruptedException, IOException {
-		URL urlObj = null;
-		try {
-			urlObj = new URL(url);
-		} catch (MalformedURLException e) {
-			System.out.println("The url was malformed!");
-		}
-		// URL连接
-		URLConnection urlCon = null;
-		urlCon = urlObj.openConnection();
-		Document doc = Jsoup.parse(urlCon.getInputStream(), "utf-8", url);
-		String jsonString = doc.toString();
-		return jsonString;
-	}
-
-	/**
-	 * 获取页面源码中的realUrl地址
-	 * 
-	 * @param html
-	 * @return
-	 */
-	public static List<String> getImageUrl(String html) {
-		Matcher matcher = Pattern.compile(IMGURL_REG).matcher(html);
-		List<String> listimgurl = new ArrayList<String>();
-		while (matcher.find()) {
-			listimgurl.add(matcher.group());
-		}
-		return listimgurl;
-	}
-
-	/**
-	 * 获取页面的标签列表
-	 * 
-	 * @param listimageurl
-	 * @return
-	 */
-	public static List<String> getImageSrc(List<String> listimageurl) {
-		List<String> listImageSrc = new ArrayList<String>();
-		for (String image : listimageurl) {
-			Matcher matcher = Pattern.compile(IMGSRC_REG).matcher(image);
-			while (matcher.find()) {
-				listImageSrc.add(matcher.group().substring(0, matcher.group().length() - 1));
-			}
-		}
-		return listImageSrc;
 	}
 
 	/**
@@ -249,119 +303,20 @@ public class XiaoHuang {
 		URLConnection urlCon = null;
 		try {
 			// 打开URL连接
-			urlCon = urlObj.openConnection();
+			urlCon = urlObj.openConnection(proxy);
 			urlCon.addRequestProperty("user-agent",
 					"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.89 Safari/537.36");
-			urlCon.addRequestProperty("cookie", "miid=633179211787626196; enc=M4dzgVZoJ%2Bl5iIz2ZOWZvqIBlm6EAqkmtXAsgItFp0MYybXuZPwFpTrE69UO2Xq2gKcWJh0ZnTglofm4GpCC6A%3D%3D; hng=CN%7Czh-CN%7CCNY%7C156; thw=cn; t=cf6ae8733603208598518fb183b97a3a; uc3=vt3=F8dByR6robjimcawtj0%3D&id2=VWw2wG%2F4FE0w&nk2=BMKQcZkhooys6A%3D%3D&lg2=W5iHLLyFOGW7aA%3D%3D; tracknick=g418572664; lgc=g418572664; _cc_=WqG3DMC9EA%3D%3D; tg=0; tk_trace=oTRxOWSBNwn9dPyorMJE%2FoPdY8zZPEr%2FCrvCMS%2BFZCFf1lyAe7CQGAWszmcVwVMqGHxrRGnAb%2BiYg%2F5QIAjRnGBxarlm5L9zimfuVem9DKDlKbpezatB7vn6P9HddJtfjpHXABAUZdcNLTn61k5QXATseJ2B4B2to8rH0xUPXtsQMmeBkLCOB3%2BdNwnrJCfEEnPDlSX2MTKz5XNJtfZs%2FJSJ1RMhfpgdQ0DECaqNS%2F8Xpko3tQQ2waAcJcz9yWzkbIJwBGpME1U1LA9UbCQ%2FL%2FvaiIGG%2BpbdHrv4QbvpVoqMY4nARfEvIouTrpdiyZeG%2FKHpyCJBI2c2H%2B4JQD01p03BYOk0L6PmnSZiU1tpRRhJIDBSETt%2FZv97i6wGcxfsCK5qZZ3wud5B26lKMhW6O%2FkMvyuDeGtpZqBnnEOKyjjBDXjH4Fldo8R7Qz26UzWHkQulm04f%2FHe2hyrcyrYdV6s4FY9uPCTdDxo88Tt1fhzQy4d7tPVp1S8iZ2%2FYEuBM1sAbhiUeAUgVCq8Su0bS09JL10LrtRXMYbkd45kDKHCR8UixPa37kyUDBiq2KYqleDvoNJhiYFqYby4wotfUrSIeVmNP2vN7hCyMgJ14eMHTdYk%2BpUQM1WWgPT2Zr1ONBgn22Q%3D%3D; cookie2=1a940e4fc53e69fac8c958817e94982e; v=0; _tb_token_=34ea67e3eb818; mt=ci=-1_0; _m_h5_tk=92f77fa5c29ac43c548cd11153327f8e_1543830080266; _m_h5_tk_enc=07287d3e442d1630ec0c7ac05c712645; uc1=cookie14=UoTYNcNUR18c7Q%3D%3D; x=e%3D1%26p%3D*%26s%3D0%26c%3D0%26f%3D0%26g%3D0%26t%3D0%26__ll%3D-1%26_ato%3D0; cna=ELp7FNleGi8CAXTsvPbaVvMp; isg=BNzcb1fi7OtusZ9FcNLZbRo0rfoiRby1JJKEY7bdwUeqAXyL3mdlD0DwZSlcjrjX");
-			urlCon.addRequestProperty("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+			
 			// 将HTML内容解析成UTF-8格式
 			Document doc = Jsoup.parse(urlCon.getInputStream(), charset, url);
 			jsonString = doc.toString();
 		} catch (IOException e) {
-			System.out.println(url);
 			System.out.println("There was an error connecting to the URL");
 			errorList.add(url);
 			return "";
 		}
 
 		return jsonString;
-	}
-
-	// 将网页中的电影图片下载到本地
-	public static void getPictures(String imageUrl, String dir) throws InterruptedException {
-		// 利用URL解析网址
-		URL urlObj = null;
-		try {
-			urlObj = new URL(imageUrl);
-
-		} catch (MalformedURLException e) {
-			System.out.println("The url was malformed!");
-		}
-
-		// URL连接
-		URLConnection urlCon = null;
-		try {
-			// 打开URL连接
-			urlCon = urlObj.openConnection();
-			// 将HTML内容解析成UTF-8格式
-			Document doc = Jsoup.parse(urlCon.getInputStream(), "utf-8", imageUrl);
-			String jsonString = doc.toString();
-
-			// 获得src的list集合
-			List<String> imageSrc = getImageUrl(jsonString);
-			// 将src的list转换为url的list
-			List<String> imageUrlList = getImageSrc(imageSrc);
-			// 开始循环下载任务
-			String realUrl = "";
-			for (int i = 0; i < imageUrlList.size(); i++) {
-				realUrl = imageUrlList.get(i);
-				if (realUrl.contains("large")) {
-					download(realUrl, dir);
-				}
-			}
-
-		} catch (IOException e) {
-			System.out.println("There was an error connecting to the URL");
-		}
-
-	}
-
-	// download()函数利用图片的url将图片下载到本地
-	public static void download(String iamgeUrl, String dir) {
-		fileName = iamgeUrl.substring(iamgeUrl.lastIndexOf("/") + 1, iamgeUrl.length());
-		try {
-
-			/*
-			 * httpurl: 图片的url dirfile: 图片的储存目录
-			 */
-			URL httpurl = new URL(iamgeUrl);
-			File dirfile = new File(dir);
-
-			// 如果图片储存的目录不存在，则新建该目录
-			if (!dirfile.exists()) {
-				dirfile.mkdirs();
-			}
-			// 利用FileUtils.copyURLToFile()实现图片下载
-			File f = new File(dir + fileName);
-
-			// 对现有的目录里文件进行校验,如果存在就不下载
-			if (!f.exists()) {
-
-				FileUtils.copyURLToFile(httpurl, f);
-				successCount++;
-				System.out.println("第" + successCount + "个图片下载成功");
-
-			} else {
-
-				// System.out.println(fileName + " 有重复文件存在 " + dir + " 目录下");
-				falseCount++;
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * 进入此页面中的二级页面,正则匹配该页面中的href标签,返回二级页面的list集合
-	 * 
-	 * @param url
-	 */
-	public static List<String> ToSecondLevel(String url) {
-		// 获取页面源码
-		getContent(url);
-		// 使用正则匹配获取所有的href标签内容
-
-		return null;
-
-	}
-
-	public static void getPictsFromTopic(String topicUrl, String errordir) {
-		List<String> regexList = getRegexList(topicUrl, ImageUrl_REX);
-		for (String imageUrl : regexList) {
-			if (imageUrl.contains("large")) {
-				download(imageUrl, errordir);
-			}
-		}
 	}
 
 	/**
@@ -391,7 +346,7 @@ public class XiaoHuang {
 							for (String imageUrl : realImgUrlList) {
 								// 获取包含large的imageUrl
 								if (imageUrl.contains("large")) {
-									download(imageUrl, dir);
+									downLoad403(imageUrl, dir);
 								}
 							}
 						}
@@ -420,7 +375,7 @@ public class XiaoHuang {
 	 * @param savePath
 	 * @throws IOException
 	 */
-	public static void downLoad403(String imageurl, String savePath) throws IOException {
+	public static void downLoad403(String imageurl, String savePath){
 
 		String fileName = imageurl.substring(imageurl.lastIndexOf("/") + 1, imageurl.length());
 
@@ -433,25 +388,36 @@ public class XiaoHuang {
 		// 调用下载方法的时候,先检验相同目录下有没有相同的文件,如果没有才开始连接并下载
 		if (!file.exists()) {
 
-			URL url = new URL(imageurl);
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			// 设置超时间为3秒
-			conn.setConnectTimeout(3 * 1000);
-			// 防止屏蔽程序抓取而返回403错误
-			conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
+			try {
+				URL url = new URL(imageurl);
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				// 设置超时间为3秒
+				conn.setConnectTimeout(3 * 1000);
+				// 防止屏蔽程序抓取而返回403错误
+				conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
+				
+				// 得到输入流
+				InputStream inputStream = conn.getInputStream();
+				// 获取自己数组
+				byte[] getData = readInputStream(inputStream);
 
-			// 得到输入流
-			InputStream inputStream = conn.getInputStream();
-			// 获取自己数组
-			byte[] getData = readInputStream(inputStream);
-
-			FileOutputStream fos = new FileOutputStream(file);
-			fos.write(getData);
-			if (fos != null) {
-				fos.close();
-			}
-			if (inputStream != null) {
-				inputStream.close();
+				FileOutputStream fos = new FileOutputStream(file);
+				fos.write(getData);
+				if (fos != null) {
+					fos.close();
+				}
+				if (inputStream != null) {
+					inputStream.close();
+				}
+			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 
 			successCount++;
