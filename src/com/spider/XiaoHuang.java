@@ -81,6 +81,7 @@ public class XiaoHuang {
 		// http://hello-happylim-blog.tumblr.com/api/read/json?start=1000&num=200
 
 		downTumblrEasy();
+//		downTumblr("hello-happylim-blog");
 		// 下载完成的时间
 		Date d2 = new Date();
 		// 计算程序的运行时间，并输出
@@ -104,13 +105,14 @@ public class XiaoHuang {
 
 	public static void downTumblrEasy() {
 		String url = "";
-		String readTxt = FileUtilss.readTxt("D:\\log\\Tumblr\\leg.txt");
+		String readTxt = FileUtilss.readTxt("D:\\log\\Tumblr\\leg500.txt");
 		Matcher matcher = Pattern.compile(CaoliuImageUrl_REX).matcher(readTxt);
 		while (matcher.find()) {
 //			System.out.println(matcher.group());
 			url = matcher.group().replace("\\", "");
 			if (url.contains("_1280")) {
-				downLoadByProxy(url, "D:\\log\\Tumblr\\hello-happylim-blog\\");
+//				System.out.println(url);
+				downLoadByProxy(url, "D:\\log\\Tumblr\\hello-happylim-blog500\\");
 			}
 		}
 	}
