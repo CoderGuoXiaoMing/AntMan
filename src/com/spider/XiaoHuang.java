@@ -19,9 +19,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.FileUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+
+import com.utils.FileUtilss;
 
 /**
  * 爬虫下载图片工具类
@@ -46,19 +47,19 @@ public class XiaoHuang {
 	// 获取src路径的正则
 	private static final String IMGSRC_REG = "[a-zA-z]+://[^\\s]*";
 	// 获取图片Url的正则
-	private static final String ImageUrl_REX = "(https|http):.{0,80}.(jpg|jpeg|png)";
+	private static final String ImageUrl_REX = "(https|http):.{0,}.(jpg|jpeg|png)";
 	// 获取豆瓣美女二级页面的正则
-	private static final String Second_REG = "(https|http)?:.{0,80}/topic/[1-9]{7}";
+	private static final String Second_REG = "(https|http)?:.{0,}/topic/[1-9]{7}";
 	// 草榴二级页面的正则
-	private static final String Caoliu_Second = "htm_data.{0,80}.html";
+	private static final String Caoliu_Second = "htm_data.{0,}.html";
 	// 包含协议http的图片匹配
-	private static final String CaoliuImageUrl_REX = "(https|http):.{0,80}.(jpg|jpeg|gif)";
+	private static final String CaoliuImageUrl_REX = "(https|http).{0,100}(jpg|jpeg)";
 
 	private static final String TopicName = "(https|http)://";
 	// 存放连接失败的imageUrl集合
 	static List<String> errorList = new ArrayList<String>();
 	static Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 1080));
-	
+
 	static Proxy proxy5 = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", 1080));
 
 	/**
@@ -69,31 +70,17 @@ public class XiaoHuang {
 	 */
 	public static void main(String[] args) throws InterruptedException, IOException {
 		System.setProperty("proxyPort", "80");
-        System.setProperty("proxyHost", "127.0.0.1");
+		System.setProperty("proxyHost", "127.0.0.1");
 		System.out.println("下载任务开始了~~~~~");
 
 		// 任务开始时间
 		Date d1 = new Date();
-	
-		String targUrl = "http://verall80.tumblr.com/api/read/json?start=0&num=200";
-//		String savePath = "D://log/Tumblr/verall80/";
-//		List<String> regexList = getRegexList(targUrl, CaoliuImageUrl_REX);
-//		for (String string : regexList) {
-//			System.out.println(string);
-//		}
-		
-		String content = getContent(targUrl);
-		System.out.println(content);
-		Matcher matcher = Pattern.compile(CaoliuImageUrl_REX).matcher(content);
-		System.out.println(matcher.group());
-//		Matcher matcher = Pattern.compile("(https|http)?:.{0,80}r.(jpg|jpeg)").matcher("src=https:\\/\\/66.media.tumblr.com\\/b8d6cedd806a590463a3eba314b2a294\\/tumblr_ph9jnoBfbK1rkr588_540.jpg\\");
-//		System.out.println(matcher.group());
-		
-		
-		
-		
-		
-		
+
+		// http://kneesocksfap.tumblr.com/api/read/json?start=500&num=200
+		// http://sarang-sweets.tumblr.com/api/read/json?start=1000&num=200
+		// http://hello-happylim-blog.tumblr.com/api/read/json?start=1000&num=200
+
+		downTumblrEasy();
 		// 下载完成的时间
 		Date d2 = new Date();
 		// 计算程序的运行时间，并输出
@@ -103,13 +90,7 @@ public class XiaoHuang {
 		System.out.println("有" + successCount + "个文件下载成功!");
 		System.out.println("有" + falseCount + "个文件已经存在!");
 		System.out.println("一共有坏链接" + errorList.size() + "个~~");
-		
-		
-	}
-	
-	private static String getTopicName(String targUrl) {
-		Matcher matcher = Pattern.compile(TopicName).matcher(targUrl);
-		return matcher.group();
+
 	}
 
 	public static void buyerShow() {
@@ -118,25 +99,98 @@ public class XiaoHuang {
 		for (String imageUrl : urlList) {
 			System.out.println(imageUrl);
 		}
-		
+
 	}
-	
-	public static void downTumblr() {
-		String  url = "";
-		String dir = "D://log/Tumblr/hisame/";
-		for (int i = 1; i <= 1; i++) {
-			url = "http://hisame.tumblr.com/page/" + i;
-			List<String> regexList = getRegexList(url, ImageUrl_REX);
-			for (String imageUrl : regexList) {
-				downLoadByProxy(imageUrl, dir);
+
+	public static void downTumblrEasy() {
+		String url = "";
+		String readTxt = FileUtilss.readTxt("D:\\log\\Tumblr\\leg.txt");
+		Matcher matcher = Pattern.compile(CaoliuImageUrl_REX).matcher(readTxt);
+		while (matcher.find()) {
+//			System.out.println(matcher.group());
+			url = matcher.group().replace("\\", "");
+			if (url.contains("_1280")) {
+				downLoadByProxy(url, "D:\\log\\Tumblr\\hello-happylim-blog\\");
 			}
 		}
-		
-		
-		
 	}
-	
-	
+
+	public static void downTumblr(String topicName) {
+
+		String targUrl = "";
+		String savePath = "D://log/Tumblr/" + topicName + "/";
+		int j = 0;
+		int answerCount = getAnswerCount(topicName);
+		targUrl = "http://" + topicName + ".tumblr.com/api/read/json?start=0&num=" + answerCount;
+		List<String> regexList = getRegexList(targUrl, CaoliuImageUrl_REX);
+		if (regexList != null) {
+			for (String string : regexList) {
+				string = string.replace("\\", "");
+				if (string.contains("_1280")) {
+					downLoadByProxy(string, savePath);
+				}
+			}
+			j++;
+		}
+		System.out.println("第" + j + "个页面下载完毕");
+
+	}
+
+	/*
+	 * 检测问题下的最大回答数量
+	 */
+	public static int getAnswerCount(String topicName) {
+
+		String url = "http://" + topicName + ".tumblr.com/api/read/json?start=0&num=10";
+		/*
+		 * 统计出来的回答个数
+		 */
+		int posts_total = 0;
+
+		// 利用URL解析网址
+		URL urlObj = null;
+		try {
+			urlObj = new URL(url);
+
+		} catch (MalformedURLException e) {
+			System.out.println("The url was malformed!");
+		}
+
+		// URL连接
+		URLConnection urlCon = null;
+		try {
+			// 打开URL连接
+			urlCon = urlObj.openConnection(proxy);
+			urlCon.addRequestProperty("user-agent",
+					"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.89 Safari/537.36");
+			urlCon.addRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+			urlCon.addRequestProperty("X-Requested-With", "XMLhttpRequest");
+			urlCon.addRequestProperty("Accept-Language", "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3");
+			urlCon.addRequestProperty("Accept-Encoding", "gzip, deflate");
+			urlCon.addRequestProperty("cookie",
+					"_ga=GA1.2.2050835102.1543988531; _gid=GA1.2.1199195418.1543988531; rxx=1nzviw7jjmr.1cigb0i7&v=1; language=%2Czh_CN; logged_in=1; pfx=e7839866299c75b264f9ce8ea4a4e658fc0f6f855b0deb797cc436bb15ac3b2e%230%236772244566; __utmc=189990958; pfg=a7531cad71967e070f7ef96af0fbec12e5e5794b292a8b835107b702c96908fd%23%7B%22gdpr_is_acceptable_age%22%3A1%2C%22exp%22%3A1575695644%2C%22vc%22%3A%22%22%7D%233116761641; tmgioct=5c0a019c0d55400940157640; __utma=189990958.2050835102.1543988531.1544157321.1544159641.8; __utmb=189990958.0.10.1544159641; __utmz=189990958.1544159641.8.8.utmcsr=lilipaix.tumblr.com|utmccn=(referral)|utmcmd=referral|utmcct=/");
+			urlCon.addRequestProperty("Connection", "keep-alive");
+			urlCon.addRequestProperty("Cache-Control", "max-age=0");
+
+			// 将HTML内容解析成UTF-8格式
+			Document doc = Jsoup.parse(urlCon.getInputStream(), "utf-8", url);
+
+			// System.out.println(doc.toString());
+			String jsonString = doc.toString();
+			String[] split = jsonString.split(",\"posts-type");
+			System.out.println(split[0]);
+			String[] split2 = split[0].split("posts-total\":");
+			System.out.println(split2[0]);
+			// posts_total = Integer.parseInt(split2[1]);
+
+		} catch (IOException e) {
+			System.out.println("There was an error connecting to the URL");
+			return 0;
+		}
+
+		return posts_total;
+	}
+
 	private static void downLoadByProxy(String imageurl, String savePath) {
 		String fileName = imageurl.substring(imageurl.lastIndexOf("/") + 1, imageurl.length());
 
@@ -151,13 +205,13 @@ public class XiaoHuang {
 
 			try {
 				URL url = new URL(imageurl);
-				
+
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection(proxy);
 				// 设置超时间为3秒
 				conn.setConnectTimeout(3 * 1000);
 				// 防止屏蔽程序抓取而返回403错误
 				conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
-				
+
 				// 得到输入流
 				InputStream inputStream = conn.getInputStream();
 				// 获取自己数组
@@ -183,7 +237,6 @@ public class XiaoHuang {
 			}
 
 			successCount++;
-			// System.out.println("图片地址为:" + imageurl);
 			System.out.println("第" + successCount + "个图片下载成功");
 
 		} else {
@@ -194,7 +247,7 @@ public class XiaoHuang {
 	}
 
 	public static void downJianDan() {
-		String url ="";
+		String url = "";
 		String dir = "D://log/jandan/";
 		String realImageUrl = "";
 		for (int i = 43; i > 0; i--) {
@@ -204,8 +257,7 @@ public class XiaoHuang {
 				realImageUrl = imageUrl.replace("mw600", "large");
 				downLoad403(realImageUrl, dir);
 			}
-			
-			
+
 		}
 	}
 
@@ -263,8 +315,8 @@ public class XiaoHuang {
 		List<String> list = new ArrayList<String>();
 		try {
 			content = getContent(url);
-//			 System.out.println("content" + content);
-			if (content != null) {
+			// System.out.println("content" + content);
+			if (!content.equals("")) {
 				Matcher matcher = Pattern.compile(regrex).matcher(content);
 				while (matcher.find()) {
 					if (!list.contains(matcher.group())) {
@@ -306,7 +358,15 @@ public class XiaoHuang {
 			urlCon = urlObj.openConnection(proxy);
 			urlCon.addRequestProperty("user-agent",
 					"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.89 Safari/537.36");
-			
+			urlCon.addRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+			urlCon.addRequestProperty("X-Requested-With", "XMLhttpRequest");
+			urlCon.addRequestProperty("Accept-Language", "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3");
+			urlCon.addRequestProperty("Accept-Encoding", "gzip, deflate");
+			urlCon.addRequestProperty("cookie",
+					"_ga=GA1.2.2050835102.1543988531; _gid=GA1.2.1199195418.1543988531; rxx=1nzviw7jjmr.1cigb0i7&v=1; language=%2Czh_CN; logged_in=1; pfx=e7839866299c75b264f9ce8ea4a4e658fc0f6f855b0deb797cc436bb15ac3b2e%230%236772244566; __utmc=189990958; pfg=a7531cad71967e070f7ef96af0fbec12e5e5794b292a8b835107b702c96908fd%23%7B%22gdpr_is_acceptable_age%22%3A1%2C%22exp%22%3A1575695644%2C%22vc%22%3A%22%22%7D%233116761641; tmgioct=5c0a019c0d55400940157640; __utma=189990958.2050835102.1543988531.1544157321.1544159641.8; __utmb=189990958.0.10.1544159641; __utmz=189990958.1544159641.8.8.utmcsr=lilipaix.tumblr.com|utmccn=(referral)|utmcmd=referral|utmcct=/");
+			urlCon.addRequestProperty("Connection", "keep-alive");
+			urlCon.addRequestProperty("Cache-Control", "max-age=0");
+
 			// 将HTML内容解析成UTF-8格式
 			Document doc = Jsoup.parse(urlCon.getInputStream(), charset, url);
 			jsonString = doc.toString();
@@ -375,7 +435,7 @@ public class XiaoHuang {
 	 * @param savePath
 	 * @throws IOException
 	 */
-	public static void downLoad403(String imageurl, String savePath){
+	public static void downLoad403(String imageurl, String savePath) {
 
 		String fileName = imageurl.substring(imageurl.lastIndexOf("/") + 1, imageurl.length());
 
@@ -395,7 +455,7 @@ public class XiaoHuang {
 				conn.setConnectTimeout(3 * 1000);
 				// 防止屏蔽程序抓取而返回403错误
 				conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
-				
+
 				// 得到输入流
 				InputStream inputStream = conn.getInputStream();
 				// 获取自己数组
