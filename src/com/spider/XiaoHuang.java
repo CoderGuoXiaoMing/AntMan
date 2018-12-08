@@ -80,8 +80,8 @@ public class XiaoHuang {
 		// http://sarang-sweets.tumblr.com/api/read/json?start=1000&num=200
 		// http://hello-happylim-blog.tumblr.com/api/read/json?start=1000&num=200
 
-		downTumblrEasy();
-//		downTumblr("hello-happylim-blog");
+//		downTumblrEasy();
+		downTumblr("hello-happylim-blog");
 		// 下载完成的时间
 		Date d2 = new Date();
 		// 计算程序的运行时间，并输出
@@ -123,6 +123,7 @@ public class XiaoHuang {
 		String savePath = "D://log/Tumblr/" + topicName + "/";
 		int j = 0;
 		int answerCount = getAnswerCount(topicName);
+		System.out.println(answerCount);
 		targUrl = "http://" + topicName + ".tumblr.com/api/read/json?start=0&num=" + answerCount;
 		List<String> regexList = getRegexList(targUrl, CaoliuImageUrl_REX);
 		if (regexList != null) {
@@ -165,14 +166,12 @@ public class XiaoHuang {
 			urlCon = urlObj.openConnection(proxy);
 			urlCon.addRequestProperty("user-agent",
 					"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.89 Safari/537.36");
-			urlCon.addRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-			urlCon.addRequestProperty("X-Requested-With", "XMLhttpRequest");
-			urlCon.addRequestProperty("Accept-Language", "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3");
-			urlCon.addRequestProperty("Accept-Encoding", "gzip, deflate");
-			urlCon.addRequestProperty("cookie",
-					"_ga=GA1.2.2050835102.1543988531; _gid=GA1.2.1199195418.1543988531; rxx=1nzviw7jjmr.1cigb0i7&v=1; language=%2Czh_CN; logged_in=1; pfx=e7839866299c75b264f9ce8ea4a4e658fc0f6f855b0deb797cc436bb15ac3b2e%230%236772244566; __utmc=189990958; pfg=a7531cad71967e070f7ef96af0fbec12e5e5794b292a8b835107b702c96908fd%23%7B%22gdpr_is_acceptable_age%22%3A1%2C%22exp%22%3A1575695644%2C%22vc%22%3A%22%22%7D%233116761641; tmgioct=5c0a019c0d55400940157640; __utma=189990958.2050835102.1543988531.1544157321.1544159641.8; __utmb=189990958.0.10.1544159641; __utmz=189990958.1544159641.8.8.utmcsr=lilipaix.tumblr.com|utmccn=(referral)|utmcmd=referral|utmcct=/");
-			urlCon.addRequestProperty("Connection", "keep-alive");
-			urlCon.addRequestProperty("Cache-Control", "max-age=0");
+//			urlCon.addRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+//			urlCon.addRequestProperty("X-Requested-With", "XMLhttpRequest");
+//			urlCon.addRequestProperty("Accept-Language", "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3");
+//			urlCon.addRequestProperty("Accept-Encoding", "gzip, deflate");
+//			urlCon.addRequestProperty("Connection", "keep-alive");
+//			urlCon.addRequestProperty("Cache-Control", "max-age=0");
 
 			// 将HTML内容解析成UTF-8格式
 			Document doc = Jsoup.parse(urlCon.getInputStream(), "utf-8", url);
